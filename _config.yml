@@ -10,8 +10,7 @@ title: The Certain Uncertainty
 email: leehkenny@gmail.com
 description: In search of meaningful correlations around the world <br> Blog by Kenny Lee
 baseurl: "/blog" # the subpath of your site, e.g. /blog
-url: "http://127.0.0.1:4000"
-# url: "http://kennylee15.github.io" # the base hostname & protocol for your site
+url: "http://kennylee15.github.io" # the base hostname & protocol for your site
 github_username:  kennylee15
 linkedin_username: kennylee16
 personalpage: kennylee.info
