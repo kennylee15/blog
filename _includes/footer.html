@@ -1,0 +1,59 @@
+<footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading small-site-title">{{ site.title }}</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list footer-content">
+          <li>Made with <i class="fa fa-heart"></i> on <a class="footerLink" href="http://jekyllrb.com"><span style="color:aaa">{ { Jekyll } }</a></span> with some adaptations from <a class="footerLink" href="http://github.com/hemangsk/Gravity">Gravity</a>.  
+          </li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2 footer-content">
+        <ul class="social-media-list">
+          <li>
+            Connect with me
+          </li>
+          {% if site.email %}
+          <li>
+            <a class="footerLink" href="mailto:{{ site.email }}?Subject=Hello!" target="_top"><i class="fa fa-envelope-o"></i> Email</a>
+          </li>  
+          {% endif %}
+
+          {% if site.linkedin_username %}
+          <li>
+            <a class="footerLink" href="https://www.linkedin.com/in/{{ site.linkedin_username }}"><i class="fa fa-linkedin"></i> LinkedIn</a>
+          </li>
+          {% endif %}
+
+          {% if site.github_username %}
+          <li>
+            <a class="footerLink" href="https://github.com/{{ site.github_username }}"><i class="fa fa-github"></i> Github</a>
+          </li>
+          {% endif %}
+
+          {% if site.twitter_username %}
+          <li>
+            <a class="footerLink" href="https://twitter.com/{{ site.twitter_username }}"><i class="fa fa-twitter"></i> Twitter</a>
+          </li>
+          {% endif %}
+
+          {% if site.personalpage %}
+          <li>
+          <a class="footerLink" href="http://{{ site.personalpage }}"><i class="fa fa-home"></i> Personal page</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3 site-description">
+        <p>
+          © <script> document.write(new Date().getFullYear()) </script> <a class="footerLink" href="http://{{ site.personalpage }}">Kenny Kyunghoon Lee</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>

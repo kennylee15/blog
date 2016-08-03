@@ -1,0 +1,4 @@
+{% capture JSPath %}{{ page.date | date: "%Y-%m-%d" | strip }}-{{ page.title | slugify }}/{{ include.name }}{% endcapture %}
+<script type="text/javascript" src="{{ site.url }}{{ site.baseurl }}/assets/posts/{{ JSPath }}">
+</script>
+<div id = "Bubblechart"></div>
