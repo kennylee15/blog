@@ -1,7 +1,7 @@
 ---
 layout: archive
 title: Projects
-permalink: projects/
+permalink: /projects/
 tagline: "Solving problems project by project."
 category: "projects"
 ---
