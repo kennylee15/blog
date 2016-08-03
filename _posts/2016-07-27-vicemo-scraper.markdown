@@ -90,15 +90,14 @@ class LetMeScrapeThat(object):
         self.phantom_webpage.quit()
 {% endhighlight %}
 
-First, the class, `LetMeScrapeThat`, instantiates a PhantomJS headless browser by calling `webdriver.PhantomJS()`. We then access the target website via the method `self.phantom_webpage.get(link)`. Note how the method `sleep()` from `time` is called to let JavaScript render the desired data completely. In addition, the `for` loop in the method `scrape_vicemo()` allows us to scroll down in our PhantomJS browser to access more data, which are rendered dynamically as the user scrolls down the page. Finally, we extract the HTML codes from the web elements and store them in the list variable `self.transactions`. 
+First, the class, `LetMeScrapeThat`, instantiates a PhantomJS headless browser by calling `webdriver.PhantomJS()`. We then access the target website via the method `self.phantom_webpage.get(link)`. Note how the method `sleep()` from `time` is called to let JavaScript render the desired data completely. In addition, the for loop in the method `scrape_vicemo()` allows us to scroll down in our PhantomJS browser to access more data, which are rendered dynamically as the user scrolls down the page. Finally, we extract the HTML codes from the web elements and store them in the list variable `self.transactions`. 
 
 
-Let's now take a look at `LetMeParseThat`, which parses HTML codes to extract the data for cleansing.
-Here is the example how the data might look like after being delivered by JavaScript.
+Let's now take a look at `LetMeParseThat`, which parses HTML codes to extract the data. Here is the example how the data might look like after being rendered by JavaScript.
 
 {% include image.html name="vicemo-html-snippet.png" caption="Snippet of HTML from Vicemo" %}
 
-Note that the description of the transaction is within `<div>` tag with `class="description"`. Also, note how the emojis are descriped by `title=emoji-name` within the `<span>` tags.
+Note that the description of the transaction is within `<div>` tag with `class="description"`. Also, note how the emojis are represented by the attribute `title=emoji-name` of the `<span>` tags.
 
 
 Take a look at the code snippet for `LetMeParseThat()` class below.
@@ -127,7 +126,7 @@ class LetMeParseThat(object):
 As observed, the description of the transactions come in both strings and emojis, so we use `extract_string_data()` and `extract_emoji_data()` methods to extract the strings and emojis from HTML accordingly.
 
 
-These data have to be cleansed before we can visualize them. The class `LetMeAnalyzeThat` does this job.
+Moreover, these data need to be cleansed before we can use them. The class `LetMeAnalyzeThat` does this job.
 
 {% highlight ruby %}
 class LetMeAnalyzeThat(object):
@@ -162,7 +161,7 @@ class LetMeAnalyzeThat(object):
 {% endhighlight %}
 
 Note most commonly used English words are hard coded to help the program filter out trivial words. Remember, we are only interested in only what Venmo users are paying for. 
-We cleanse each word of special characters and whitespaces, using Regex, and add to a compiler. A similar process is carried out to extract emoji data. The resulting outputs are dictionaries containing the objects or activities Venmo users paid for and how many times it appears in the collected data. Finally, we have all the tools to obtain the data. 
+Using Regex, we get rid of special characters and whitespaces from words. The clenased words are then added to a compiler. A similar process is carried out to extract emoji data. The resulting outputs are dictionaries containing the objects or activities Venmo users paid for and how many times it appears in the collected data. Finally, we have all the tools to obtain the data. 
 
 
 ### Conclusion
