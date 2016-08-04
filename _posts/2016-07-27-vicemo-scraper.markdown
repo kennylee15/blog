@@ -123,7 +123,7 @@ class LetMeParseThat(object):
                 self.emoji_compiler.append(span['title'])
 {% endhighlight %}
 
-As observed, the description of the transactions come in both strings and emojis, so we use `extract_string_data()` and `extract_emoji_data()` methods to extract the strings and emojis from HTML accordingly.
+As observed, the description of the transactions comes in both strings and emojis, so we use `extract_string_data()` and `extract_emoji_data()` methods to extract the strings and emojis from HTML accordingly.
 
 
 Moreover, these data need to be cleansed before we can use them. The class `LetMeAnalyzeThat` does this job.
@@ -160,8 +160,7 @@ class LetMeAnalyzeThat(object):
         return self.vice_emoji_dict
 {% endhighlight %}
 
-Note most commonly used English words are hard coded to help the program filter out trivial words. Remember, we are only interested in only what Venmo users are paying for. 
-Using Regex, we get rid of special characters and whitespaces from words. The clenased words are then added to a compiler. A similar process is carried out to extract emoji data. The resulting outputs are dictionaries containing the objects or activities Venmo users paid for and how many times it appears in the collected data. Finally, we have all the tools to obtain the data. 
+Note most commonly used English words are hard coded to help the program filter out trivial words. Remember, we are only interested in what Venmo users are paying for. Using Regex, we get rid of special characters and whitespaces from words. The clenased words are then added to a compiler. A similar process is carried out to extract emoji data. The resulting outputs are dictionaries containing the objects or activities Venmo users paid for and how many times it appears in the collected data. Finally, we have all the tools to obtain the data. 
 
 
 ### Conclusion
