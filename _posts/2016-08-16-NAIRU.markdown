@@ -90,6 +90,7 @@ function type(d, _, columns) {
   for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
   return d;
 }
+<<<<<<< HEAD
 var margin = {top: 20, right: 20, buttom: 30, left: 50},
 	width = 400 - margin.left - margin.right,
     height = 400 - margin.top - margin.buttom;
@@ -160,4 +161,6 @@ function type(d) {
 }
 
 
+=======
+>>>>>>> 27c1079c07cc76fd058162086e0bcc52fc27403e
 </script>
