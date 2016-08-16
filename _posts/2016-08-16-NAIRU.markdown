@@ -30,7 +30,7 @@ var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.percentage); });
 
-d3.csv("http://kennylee15.github.io/blog/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
+d3.csv("/_site/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
   if (error) throw error;
 
   var variables = data.columns.slice(1).map(function(id) {
