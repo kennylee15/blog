@@ -30,7 +30,7 @@ var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.percentage); });
 
-d3.tsv("http://kennylee15.github.io/blog/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
+d3.csv("http://kennylee15.github.io/blog/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
   if (error) throw error;
 
   var variables = data.columns.slice(1).map(function(id) {
@@ -90,77 +90,5 @@ function type(d, _, columns) {
   for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
   return d;
 }
-<<<<<<< HEAD
-var margin = {top: 20, right: 20, buttom: 30, left: 50},
-	width = 400 - margin.left - margin.right,
-    height = 400 - margin.top - margin.buttom;
 
-var parseTime = d3.timeParse("%m-%d-%y");
-
-var x = d3.scaleTime().range([0, width]),
-    y = d3.scaleLinear().range([height, 0]);
-
-var xAxis = d3.axisBottom(x);
-
-var yAxis = d3.axisLeft(y);
-
-var line1 = d3.line()
-	.x(function(d) { return x(d.DATE) })
-	.y(function(d) { return y(d.NROU)});
-
-var line2 = d3.line()
-	.x(function(d) { return x(d.DATE) })
-	.y(function(d) { return y(d.UNRATE)});
-
-var line3 = d3.line()
-	.x(function(d) { return x(d.DATE) })
-	.y(function(d) { return y(d.FEDFUNDS)});
-
-
-	.attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-	.append("g")
-	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-
-d3.csv(, type, function(error, data) {
-    if (error) throw error;
-    console.log(data.columns);
-    x.domain(d3.extent(data, function(d) { return d.date; }));
-    y.domain(d3.extent(data, function(d) { return d.close; }));
-    
-    svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
-
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(yAxis)
-
-    .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 6)
-        .attr("dy", ".71em")
-        .style("text-anchor", "end")
-        .text("Percentage");
-
-    svg.append("path")
-        .data(data)
-        .enter().append("line")
-        .attr("class", "line1")
-        .attr("d", line1);
-}
-
-function type(d) {
-  d.DATE = formatDate.parse(d.DATE);
-  d.NROU = +d.close;
-  d.UNRATE = +d.UNRATE;
-  d.FEDFUNDS = +d.FEDFUNDS;
-  return d;
-}
-
-
-=======
->>>>>>> 27c1079c07cc76fd058162086e0bcc52fc27403e
 </script>
