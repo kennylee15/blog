@@ -15,8 +15,8 @@ This graph below depicts the historical trends of NAIRU and other related variab
 <script>
 var svg = d3.select("#time-graph").append("svg"),
     margin = {top: 20, right: 80, bottom: 30, left: 50},
-    width = svg.attr("width") - margin.left - margin.right,
-    height = svg.attr("height") - margin.top - margin.bottom,
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var parseTime = d3.timeParse("%m-%d-%Y");
