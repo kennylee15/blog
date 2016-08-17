@@ -27,15 +27,14 @@ var margin = {top: 20, right: 80, bottom: 30, left: 50},
     height = 500 - margin.top - margin.bottom,
     aspect = width / height;
 
-var svg = d3.select("#d3-graph").append("svg")
-
-svg.attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom);
+var svg = d3.select("#d3-graph").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom);
 
 d3.select(window)
     .on("resize", function() {
       var targetWidth = svg.node().getBoundingClientRect().width;
-      svg.attr("width", targetWidth);
-      svg.attr("height", targetWidth / aspect);
+      console.log(targetWidth)
+      svg.attr("width", targetWidth + margin.left + margin.right);
+      svg.attr("height", targetWidth / aspect + margin.top + margin.bottom);
     });
 
 var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
