@@ -31,10 +31,10 @@ var svg = d3.select("#d3-graph").append("svg").attr("width", width + margin.left
 
 d3.select(window)
     .on("resize", function() {
-      var targetWidth = svg.node().getBoundingClientRect().width + margin.left + margin.right;
+      var targetWidth = svg.node().getBoundingClientRect().width;
       console.log(targetWidth)
       svg.attr("width", targetWidth);
-      svg.attr("height", targetWidth / aspect + margin.top + margin.bottom);
+      svg.attr("height", targetWidth / aspect);
     });
 
 var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
