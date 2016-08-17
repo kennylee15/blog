@@ -11,13 +11,13 @@ NAIRU is an acronym for “non-accelerating-inflation rate of unemployment”. P
 This graph below depicts the historical trends of NAIRU and other related variable.
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
-<div id="time-graph"></div>
+<div id="d3-graph"></div>
 <script>
-var svg = d3.select("#time-graph").append("svg"),
-    margin = {top: 20, right: 80, bottom: 30, left: 50},
+var margin = {top: 20, right: 80, bottom: 30, left: 50},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom,
-    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    svg = d3.select("#d3-graph").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom),
+    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")";
 
 var parseTime = d3.timeParse("%Y-%m-%d");
 
@@ -74,6 +74,7 @@ d3.csv("/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
   variable.append("path")
       .attr("class", "line")
       .attr("d", function(d) { return line(d.values); })
+      .attr("fill", none)
       .style("stroke", function(d) { return z(d.id); });
 
   variable.append("text")
