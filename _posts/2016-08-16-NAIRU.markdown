@@ -25,6 +25,7 @@ This graph below depicts the historical trends of NAIRU and other related variab
 
 </style>
 <div id="d3-graph"></div>
+<span id="tooltip"></span>
 <script>
 var margin = {top: 20, right: 80, bottom: 30, left: 50},
     width = 680 - margin.left - margin.right,
@@ -35,6 +36,12 @@ var svg = d3.select("#d3-graph").append("svg")
     .attr("height", height + margin.top + margin.bottom)
 
 var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var tooltip = d3.select("#tooltip").append("div")
+        .style('position', 'absolute')
+        .style('padding', '0 10px')
+        .style('background', 'none')
+        .style('opacity', 0)
 
 var parseTime = d3.timeParse("%Y-%m-%d");
 
@@ -92,6 +99,13 @@ d3.csv("/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
       .attr("class", "line")
       .attr("d", function(d) { return line(d.values); })
       .style("stroke", function(d) { return z(d.id); });
+      .on("mouseover", function(d) {
+          tooltip.transition()
+              .style("opacity", .9)
+          tooltip.html(d.values.percentage)
+              .style('left', (d3.event.pageX - 35) + 'px')
+              .style('top', (d3.event.pageY - 30) + 'px')
+      })
 
   variable.append("text")
       .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
