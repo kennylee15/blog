@@ -62,6 +62,7 @@ d3.csv("/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
       })
     };
   });
+  console.log(variables)
 
   x.domain(d3.extent(data, function(d) { return d.date; }));
 
