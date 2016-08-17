@@ -101,6 +101,21 @@ d3.csv("/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
       .attr("dy", "0.35em")
       .style("font", "10px sans-serif")
       .text(function(d) { return d.id; });
+
+  function resize() {
+    var width = parseInt(d3.select("#d3-graph").style("width") - margin.left - margin.right),
+      height = parseInt(d3.select("#d3-graph").style("height") - margin.top - margin.bottom);
+
+    x.range([0, width]);
+    y.range([height,0]);
+    d3.selectAll(".line")
+        .attr("d", function(d) { return line(d.values); })
+        .style("stroke", function(d) { return z(d.id); })
+  }
+
+  d3.select(window).on("resize", resize);
+  resize();
+
 });
 
 function type(d, _, columns) {
@@ -108,18 +123,5 @@ function type(d, _, columns) {
   for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
   return d;
 }
-
-function resize() {
-  var width = parseInt(d3.select("#d3-graph").style("width") - margin.left - margin.right),
-      height = parseInt(d3.select("#d3-graph").style("height") - margin.top - margin.bottom);
-
-  x.range([0, width]);
-  y.range([height,0]);
-  d3.selectAll(".line")
-      .attr("d", function(d) { return line(d.values); })
-      .style("stroke", function(d) { return z(d.id); })
-}
-
-d3.select(window).on("resize", resize);
 
 </script>
