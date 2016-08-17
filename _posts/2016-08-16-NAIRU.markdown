@@ -28,8 +28,8 @@ This graph below depicts the historical trends of NAIRU and other related variab
 <div id="d3-graph"></div>
 <script>
 var margin = {top: 20, right: 80, bottom: 30, left: 50},
-    width = parseInt(d3.select("#d3-graph").style("width")) - margin.left - margin.right,
-    height = parseInt(d3.select("#d3-graph").style("height")) - margin.top - margin.bottom;
+    width = 680 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
 
 var svg = d3.select("#d3-graph").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -101,29 +101,6 @@ d3.csv("/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
       .attr("dy", "0.35em")
       .style("font", "10px sans-serif")
       .text(function(d) { return d.id; });
-
-  function resize() {
-    var width = parseInt(d3.select("#d3-graph").style("width") - margin.left - margin.right),
-        height = parseInt(d3.select("#d3-graph").style("height") - margin.top - margin.bottom);
-    // update the range of the scale
-    x.range([0, width]);
-    y.range([height,0]);
-    
-    d3.select(".axis--x")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-    d3.select(".axis--y")
-      .call(d3.axisLeft(y))
-
-    
-    d3.selectAll(".line")
-        .attr("d", function(d) { return line(d.values); })
-        .style("stroke", function(d) { return z(d.id); })
-  }
-
-  d3.select(window).on("resize", resize);
-  resize();
-
 });
 
 function type(d, _, columns) {
