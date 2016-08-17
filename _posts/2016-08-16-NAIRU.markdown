@@ -27,7 +27,7 @@ var margin = {top: 20, right: 80, bottom: 30, left: 50},
     height = 500 - margin.top - margin.bottom,
     aspect = width / height;
 
-var svg = d3.select("#d3-graph").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom).attr("viewBox", "0 "+"0 "+width + " " + height).attr("preserveAspectRatio", "xMidYMid meet");
+var svg = d3.select("#d3-graph").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom).attr("viewBox", "0 "+"0 "+(width + margin.left + margin.right) + " " + (height+ margin.top + margin.bottom)).attr("preserveAspectRatio", "xMinYMid");
 
 d3.select(window)
     .on("resize", function() {
