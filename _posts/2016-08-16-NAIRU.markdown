@@ -25,23 +25,10 @@ This graph below depicts the historical trends of NAIRU and other related variab
 var margin = {top: 20, right: 80, bottom: 30, left: 50},
     width = 680 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom,
-    aspect = width / height;
 
 var svg = d3.select("#d3-graph").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
-    .attr("viewBox", "0 "+"0 "+(width + margin.left + margin.right) + " " + (height+ margin.top + margin.bottom))
-    .attr("preserveAspectRatio", "xMinYMid");
-
-d3.select(window)
-    .on("resize", function() {
-      var targetWidth = svg.node().getBoundingClientRect().width,
-          width = targetWidth,
-          height = targetWidth / aspect;
-      console.log(targetWidth)
-      svg.attr("width", width);
-      svg.attr("height", height);
-    });
 
 var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
