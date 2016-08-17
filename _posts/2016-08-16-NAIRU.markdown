@@ -24,8 +24,7 @@ This graph below depicts the historical trends of NAIRU and other related variab
 }
 
 </style>
-<div id="d3-graph"></div>
-<span id="tooltip"></span>
+<div id="d3-graph"><span id="tooltip"></span></div>
 <script>
 var margin = {top: 20, right: 80, bottom: 30, left: 50},
     width = 680 - margin.left - margin.right,
@@ -38,10 +37,8 @@ var svg = d3.select("#d3-graph").append("svg")
 var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var tooltip = d3.select("#tooltip").append("div")
-        .style('position', 'absolute')
-        .style('padding', '0 10px')
-        .style('background', 'none')
-        .style('opacity', 0);
+    .style("padding", "0 10px")
+    .style("opacity", 0)
 
 var parseTime = d3.timeParse("%Y-%m-%d");
 
