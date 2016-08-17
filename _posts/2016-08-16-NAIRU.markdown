@@ -98,14 +98,14 @@ d3.csv("/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
   variable.append("path")
       .attr("class", "line")
       .attr("d", function(d) { return line(d.values); })
-      .style("stroke", function(d) { return z(d.id); });
+      .style("stroke", function(d) { return z(d.id); })
       .on("mouseover", function(d) {
           tooltip.transition()
               .style("opacity", .9)
           tooltip.html(d.values.percentage)
               .style('left', (d3.event.pageX - 35) + 'px')
               .style('top', (d3.event.pageY - 30) + 'px')
-      })
+      });
 
   variable.append("text")
       .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
