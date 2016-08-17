@@ -104,10 +104,18 @@ d3.csv("/assets/posts/2016-08-16-NAIRU/fred.csv", type, function(error, data) {
 
   function resize() {
     var width = parseInt(d3.select("#d3-graph").style("width") - margin.left - margin.right),
-      height = parseInt(d3.select("#d3-graph").style("height") - margin.top - margin.bottom);
-
+        height = parseInt(d3.select("#d3-graph").style("height") - margin.top - margin.bottom);
+    // update the range of the scale
     x.range([0, width]);
     y.range([height,0]);
+    
+    d3.select(".axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x))
+    d3.select(".axis--y")
+      .call(d3.axisLeft(y))
+
+    
     d3.selectAll(".line")
         .attr("d", function(d) { return line(d.values); })
         .style("stroke", function(d) { return z(d.id); })
