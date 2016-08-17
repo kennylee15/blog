@@ -33,7 +33,7 @@ var margin = {top: 20, right: 80, bottom: 30, left: 50},
 
 var svg = d3.select("#d3-graph").append("svg")
     .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("height", height + margin.top + margin.bottom);
 
 var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -41,7 +41,7 @@ var tooltip = d3.select("#tooltip").append("div")
         .style('position', 'absolute')
         .style('padding', '0 10px')
         .style('background', 'none')
-        .style('opacity', 0)
+        .style('opacity', 0);
 
 var parseTime = d3.timeParse("%Y-%m-%d");
 
