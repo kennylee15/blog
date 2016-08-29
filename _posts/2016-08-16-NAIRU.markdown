@@ -8,7 +8,7 @@ categories: ["projects", "D3", "economics"]
 The unemployment rate has been falling even thought the inflation rate has been flat and economic growth has been slow. The Fed has been debating when and by how much the interest rate should be raised. Some argue that the Fed hasn't figured things out yet, and suggest that the Fed is now looking for a new framework that would fit the current economic situation. Check out this [article from New York Times](http://nyti.ms/2b50TD8) about the minutes from the recent policy meeting.
 
 
-The key figures at the Fed are not completely sure what is the best for this country. Under such a circumstance, a concept now getting more attention is 'NAIRU'. NAIRU is an acronym for “non-accelerating-inflation rate of uTnemployment”. Published by the Congressional Budget Office, NAIRU is the theoretical threshold level of unemployment in an economy that does not cause inflation to either rise or fall.
+The key decision makers at the Fed are not completely sure what is the best for this country. Under such a circumstance, a concept now getting more attention is 'NAIRU'. NAIRU is an acronym for “non-accelerating-inflation rate of unemployment”. Published by the Congressional Budget Office, NAIRU is the theoretical threshold level of unemployment in an economy that does not cause inflation to either rise or fall, and is often considered synonimous with the natural rate of unemployment. This concept derives from the inverse relationship between the inflation rate and unemployment rate. If the current rate of unemployment is lower than the threshold, or natural unemployment rate, the inflation rate is expected rise, and vice versa.
 
 
 This graph below depicts the historical trends of NAIRU and other related variable.
@@ -130,3 +130,12 @@ function type(d, _, columns) {
 }
 
 </script>
+
+
+We can see that as the actual unemployment goes below NAIRU, the Fed raises the federal fund rate to lower the inflation. Note how the actual unemployment rate is reaching very close to NAIRU near the second quarter of 2016. There are many discussions on whether the Fed is going to raise the interest rate in the near future to avoid inflation pressures. The Fed has been paying close attention to the NAIRU so that it can react accordingly before the slack in the job market disappear. 
+
+
+However, the current economic situation is challenging the current estimate of NAIRU of the US economy. Although the actual unemployment rate has been consistantly falling, the inflation rate has been flat and is expected to remain so. Consequently, some officials and scholars are contemplating revising down the estimated NAIRU. Yet, it is very difficult to measure NAIRU accurately. In fact, the natural unemployment rate of the economy is affected by numerous factors such as the productivity of the economy and job matching efficiency in the labor market. The scholarly estimates of NAIRU so far often involve a high degree of statistical uncertainty. 
+
+
+The difficulty in measuring the natural unemployment rate of the economy poses an additional problem to the central bank. The Fed officials have been showing many signs they would raise the interest rate in the near future. Definitely, now is the time to revisit our understanding of NAIRU.
