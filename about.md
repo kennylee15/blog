@@ -4,18 +4,14 @@ title : About
 permalink: /about/
 ---
 
-<center><h1> Welcome to the Certain Uncertainty </h1></center>
+<center><h1>   </h1></center>
 <div class="separator separator-danger">♦</div>
 
-### Hi, I'm Kenny
+### Hi, I'm Kenny.
 
-I am a recent graduate from New York University, with a major in Economics with a double minor in Math and Business. My curiosity about the society and human behavior in the modern deluge of information has been the driving force of my research and other side projects. I am proficient in Python, R, and Stata, and I am passionate about HTML5 and JavaScript. 
+I am currently located in New York City and I'm passionate about data and economic analysis. I am not maintaining this blog due to other commitments at the moment.
 
-
-I am currently located in New York City and always ready for new challenges. Please feel free to reach out to me if you wish to suggest new projects, discuss topics in data and economic analysis, or chat about just anything.
-
-
-Visit my <a href="http://{{ site.personalpage }}"><i class="fa fa-home"></i> personal website</a> or contact me via: 
+Please visit my <a href="http://{{ site.personalpage }}"><i class="fa fa-home"></i> personal website</a> or contact me via: 
 <ul>
   {% if site.email %}
     <li>
