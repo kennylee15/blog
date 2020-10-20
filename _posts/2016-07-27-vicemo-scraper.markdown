@@ -75,13 +75,14 @@ class LetMeScrapeThat(object):
 
     def scrape_vicemo(self, link, howmany = 100):
         self.phantom_webpage.get(link)
-        print('Visiting the data source: {}'.format(link))
+        print("Visiting the data source: {}".format(link))
         print("Please, wait.")
         sleep(2)  # We make the scraper wait until the website loads completely
-        for int in range((howmany // 100)-1):
-            # each "scroll" yields 100 transactions on Venmo; the web driver has to sleep so that all data can load
+        for i in range( howmany // 100 - 1 ):
             self.phantom_webpage.execute_script("window.scrollTo(0, 10000);")
+            # Each scroll yields 100 transactions on Venmo
             sleep(2)
+            # The web driver has to sleep so that all data can load
 
         webele = self.phantom_webpage.find_elements_by_class_name("transaction")[:howmany + 1]
 

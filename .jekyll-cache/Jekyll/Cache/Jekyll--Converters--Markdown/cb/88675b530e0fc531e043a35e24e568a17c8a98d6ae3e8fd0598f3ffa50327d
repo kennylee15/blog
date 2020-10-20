@@ -1,0 +1,163 @@
+I" q<p>Of course, Venmo is perfect for splitting up the bills from that crazy night out with your friends. Yet, it is easy to forget about the pitfall of the convenience at your fingertip—your privacy compromised.</p>
+
+<p>In fact, all payments you make through Venmo are publicly accessible unless you make them specifically private. These public data can offer some interesting insights, such as what people (supposedly) buy and how much they spend. While I was searching for an adequate topic for my final project for an NYU class called Python for App this spring, a more interesting, perhaps mischievous, question came to my mind: <em>“What kind of bad things do people buy through Venmo?”</em></p>
+
+<p>With some research, I was able to find relevant data on a website called <a href="http://www.vicemo.com/">Vicemo.com</a>. Built by two developers, <a href="http://mikelacher.com/">Mike Lacher</a> and <a href="http://ilovechrisbaker.com/">Chris Baker</a>, Vicemo.com uses Venmo API and JavaScript to collect real-time, public <a href="http://www.venmo.com/">Venmo</a> transactions involving <em>drugs, booze, and sex</em>.</p>
+
+<p><em>Voila!</em></p>
+
+<div class="image">
+
+
+    <figure>
+    	<img src="http://kennylee15.github.io/blog/assets/posts/2016-07-27-uncovering-people-s-dirty-little-secrets-on-venmo-with-python-web-scraper/vicemo-header.png" />
+    </figure>
+
+</div>
+
+<p>Using web scraping tool will allow us to quickly collect the data without intensive coding involving the Venmo API.</p>
+
+<h3 id="introduction">Introduction</h3>
+
+<p>For this project, I use Python, a powerful tool for web scraping. However, after visiting Vicemo.com, I quickly realized its content is delievered completely through JavaScript. It can be challening to get the data from the website that depends on JavaScript to dynamically render its content. Using Python modules such as <a href="http://docs.python-requests.org/en/master/">Requests</a> and <a href="https://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a> may not be so fruitful as the content on such websites loads only when the user activity on the browser calls the corresponding JavaScript. While struggling to solve this problem, I found a potential solution from a <a href="http://toddhayton.com/2015/02/03/scraping-with-python-selenium-and-phantomjs/">blog post by Todd Hayton</a>, a freelance software developer. An effective way to get around this problem is to use <a href="http://www.seleniumhq.org/">Selenium</a>, a tool for automating browsers, and <a href="http://phantomjs.org/">PhantomJS</a>, a non-GUI (or headless) browser.</p>
+
+<h3 id="implementation">Implementation</h3>
+
+<p>First, we need to install PhantomJS and Selenium bindings for Python. I am quoting the code snippet from Hayton’s blog post.</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="err">$</span> <span class="n">mkdir</span> <span class="n">scraper</span> <span class="o">&amp;&amp;</span> <span class="n">cd</span> <span class="n">scraper</span>
+<span class="err">$</span> <span class="n">brew</span> <span class="n">install</span> <span class="n">phantomjs</span>
+<span class="err">$</span> <span class="n">virtualenv</span> <span class="n">venv</span>
+<span class="err">$</span> <span class="n">source</span> <span class="n">venv</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">activate</span>
+<span class="err">$</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">selenium</span></code></pre></figure>
+
+<p>Or, you can download PhantomJS and Selenium manually and place them in your virtual environment library. The below are the links:</p>
+
+<ul>
+  <li>PhantomJS: <a href="http://phantomjs.org/download.html">http://phantomjs.org/download.html</a></li>
+  <li>Selenium: <a href="http://www.seleniumhq.org/download/">http://www.seleniumhq.org/download/</a></li>
+</ul>
+
+<p>Now, let’s see how this is done.</p>
+
+<p>There are three tasks that need to be done in the following order:</p>
+
+<ol>
+  <li>Scrape web elements</li>
+  <li>Parse HTML elements</li>
+  <li>Cleanse data</li>
+</ol>
+
+<p>We create three classes to do these tasks–<code class="language-plaintext highlighter-rouge">LetMeScrapeThat</code>, <code class="language-plaintext highlighter-rouge">LetMeParseThat</code>, and <code class="language-plaintext highlighter-rouge">LetMeAnalyzeThat</code>. An additional class that instanciates these three classes is <code class="language-plaintext highlighter-rouge">VicemoScraper</code>. The below is the code snippet that showcases how PhantomJS and Selenium are used.</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">import</span> <span class="n">re</span>
+<span class="n">from</span> <span class="n">selenium</span> <span class="n">import</span> <span class="n">webdriver</span>
+<span class="n">from</span> <span class="n">bs4</span> <span class="n">import</span> <span class="no">BeautifulSoup</span>
+<span class="n">from</span> <span class="n">time</span> <span class="n">import</span> <span class="nb">sleep</span>
+
+
+<span class="k">class</span> <span class="nc">LetMeScrapeThat</span><span class="p">(</span><span class="n">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Accessing data."</span><span class="p">)</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">phantom_webpage</span> <span class="o">=</span> <span class="n">webdriver</span><span class="o">.</span><span class="no">PhantomJS</span><span class="p">()</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">phantom_webpage</span><span class="p">.</span><span class="nf">set_window_size</span><span class="p">(</span><span class="mi">1120</span><span class="p">,</span> <span class="mi">550</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">scrape_vicemo</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">link</span><span class="p">,</span> <span class="n">howmany</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">phantom_webpage</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Visiting the data source: {}"</span><span class="p">.</span><span class="nf">format</span><span class="p">(</span><span class="n">link</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Please, wait."</span><span class="p">)</span>
+        <span class="nb">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># We make the scraper wait until the website loads completely</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="n">range</span><span class="p">(</span> <span class="n">howmany</span> <span class="sr">//</span><span class="err"> 100 - 1 ):
+            </span><span class="sr">se</span><span class="n">lf</span><span class="p">.</span><span class="nf">phantom_webpage</span><span class="p">.</span><span class="nf">execute_script</span><span class="p">(</span><span class="s2">"window.scrollTo(0, 10000);"</span><span class="p">)</span>
+            <span class="c1"># Each scroll yields 100 transactions on Venmo</span>
+            <span class="nb">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># The web driver has to sleep so that all data can load</span>
+
+        <span class="n">webele</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nf">phantom_webpage</span><span class="p">.</span><span class="nf">find_elements_by_class_name</span><span class="p">(</span><span class="s2">"transaction"</span><span class="p">)[</span><span class="ss">:howmany</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># enter list comprehension to extract the HTML codes from each web element</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">transactions</span> <span class="o">=</span> <span class="p">[</span><span class="n">ele</span><span class="p">.</span><span class="nf">get_attribute</span><span class="p">(</span><span class="s2">"innerHTML"</span><span class="p">)</span> <span class="k">for</span> <span class="n">ele</span> <span class="k">in</span> <span class="n">webele</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">phantom_webpage</span><span class="p">.</span><span class="nf">quit</span><span class="p">()</span></code></pre></figure>
+
+<p>First, the class, <code class="language-plaintext highlighter-rouge">LetMeScrapeThat</code>, instantiates a PhantomJS headless browser by calling <code class="language-plaintext highlighter-rouge">webdriver.PhantomJS()</code>. We then access the target website via the method <code class="language-plaintext highlighter-rouge">self.phantom_webpage.get(link)</code>. Note how the method <code class="language-plaintext highlighter-rouge">sleep()</code> from <code class="language-plaintext highlighter-rouge">time</code> is called to let JavaScript render the desired data completely. In addition, the for loop in the method <code class="language-plaintext highlighter-rouge">scrape_vicemo()</code> allows us to scroll down in our PhantomJS browser to access more data, which are rendered dynamically as the user scrolls down the page. Finally, we extract the HTML codes from the web elements and store them in the list variable <code class="language-plaintext highlighter-rouge">self.transactions</code>.</p>
+
+<p>Let’s now take a look at <code class="language-plaintext highlighter-rouge">LetMeParseThat</code>, which parses HTML codes to extract the data. Here is the example how the data might look like after being rendered by JavaScript.</p>
+
+<div class="image">
+
+
+    <figure>
+        <img src="http://kennylee15.github.io/blog/assets/posts/2016-07-27-uncovering-people-s-dirty-little-secrets-on-venmo-with-python-web-scraper/vicemo-html-snippet.png" />
+        <figcaption>Snippet of HTML from Vicemo</figcaption>
+    </figure>
+
+</div>
+
+<p>Note that the description of the transaction is within <code class="language-plaintext highlighter-rouge">&lt;div&gt;</code> tag with <code class="language-plaintext highlighter-rouge">class="description"</code>. Also, note how the emojis are represented by the attribute <code class="language-plaintext highlighter-rouge">title=emoji-name</code> of the <code class="language-plaintext highlighter-rouge">&lt;span&gt;</code> tags.</p>
+
+<p>Take a look at the code snippet for <code class="language-plaintext highlighter-rouge">LetMeParseThat()</code> class below.</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">LetMeParseThat</span><span class="p">(</span><span class="n">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span><span class="n">list_of_html</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Parsing data."</span><span class="p">)</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">soup_list</span> <span class="o">=</span> <span class="p">[</span><span class="no">BeautifulSoup</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s2">"html.parser"</span><span class="p">)</span> <span class="k">for</span> <span class="n">html</span> <span class="k">in</span> <span class="n">list_of_html</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">desc_tags_compiler</span> <span class="o">=</span><span class="p">[</span><span class="n">soup_ele</span><span class="p">.</span><span class="nf">find_all</span><span class="p">(</span><span class="s1">'div'</span><span class="p">,</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="ss">:'description'</span><span class="p">})</span> <span class="k">for</span> <span class="n">soup_ele</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nf">soup_list</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">extract_string_data</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="c1"># extracts strings from the &lt;div&gt; tags with class="description"</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">string_compiler</span> <span class="o">=</span> <span class="p">[</span><span class="n">soup_ele</span><span class="p">.</span><span class="nf">find</span><span class="p">(</span><span class="s1">'div'</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="ss">:'description'</span><span class="p">}).</span><span class="nf">string</span>
+                                <span class="k">for</span> <span class="n">soup_ele</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nf">soup_list</span>
+                                <span class="k">if</span> <span class="n">soup_ele</span><span class="p">.</span><span class="nf">find</span><span class="p">(</span><span class="s1">'div'</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="ss">:'description'</span><span class="p">}).</span><span class="nf">string</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">extract_emoji_data</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="c1"># extracts emojis from the &lt;span&gt; tags with class="emoji emoji-sizer"</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">emoji_compiler</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">soup_ele</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nf">soup_list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">span</span> <span class="k">in</span> <span class="n">soup_ele</span><span class="p">.</span><span class="nf">find_all</span><span class="p">(</span><span class="s1">'span'</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:[</span><span class="s1">'emoji'</span><span class="p">,</span><span class="s1">'emoji-sizer'</span><span class="p">]}):</span>
+                <span class="nb">self</span><span class="p">.</span><span class="nf">emoji_compiler</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">span</span><span class="p">[</span><span class="s1">'title'</span><span class="p">])</span></code></pre></figure>
+
+<p>As observed, the description of the transactions comes in both strings and emojis, so we use <code class="language-plaintext highlighter-rouge">extract_string_data()</code> and <code class="language-plaintext highlighter-rouge">extract_emoji_data()</code> methods to extract the strings and emojis from HTML accordingly.</p>
+
+<p>Moreover, these data need to be cleansed before we can use them. The class <code class="language-plaintext highlighter-rouge">LetMeAnalyzeThat</code> does this job.</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">LetMeAnalyzeThat</span><span class="p">(</span><span class="n">object</span><span class="p">):</span>
+    <span class="n">common_english_words</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'the'</span><span class="p">,</span> <span class="s1">'be'</span><span class="p">,</span> <span class="s1">'to'</span><span class="p">,</span> <span class="s1">'of'</span><span class="p">,</span> <span class="s1">'and'</span><span class="p">,</span> <span class="s1">'a'</span><span class="p">,</span> <span class="s1">'in'</span><span class="p">,</span> <span class="s1">'that'</span><span class="p">,</span> <span class="s1">'have'</span><span class="p">,</span> <span class="s1">'I'</span><span class="p">,</span> <span class="s1">'it'</span><span class="p">,</span> <span class="s1">'for'</span><span class="p">,</span> <span class="s1">'not'</span><span class="p">,</span> <span class="s1">'on'</span><span class="p">,</span> <span class="s1">'with'</span><span class="p">,</span> <span class="s1">'he'</span><span class="p">,</span> <span class="s1">'as'</span><span class="p">,</span> <span class="s1">'you'</span><span class="p">,</span> <span class="s1">'do'</span><span class="p">,</span> <span class="s1">'at'</span><span class="p">,</span> <span class="s1">'this'</span><span class="p">,</span> <span class="s1">'but'</span><span class="p">,</span> <span class="s1">'his'</span><span class="p">,</span> <span class="s1">'by'</span><span class="p">,</span> <span class="s1">'from'</span><span class="p">,</span> <span class="s1">'they'</span><span class="p">,</span> <span class="s1">'we'</span><span class="p">,</span> <span class="s1">'say'</span><span class="p">,</span> <span class="s1">'her'</span><span class="p">,</span> <span class="s1">'she'</span><span class="p">,</span> <span class="s1">'or'</span><span class="p">,</span> <span class="s1">'an'</span><span class="p">,</span> <span class="s1">'will'</span><span class="p">,</span> <span class="s1">'my'</span><span class="p">,</span> <span class="s1">'one'</span><span class="p">,</span> <span class="s1">'all'</span><span class="p">,</span> <span class="s1">'would'</span><span class="p">,</span> <span class="s1">'there'</span><span class="p">,</span> <span class="s1">'their'</span><span class="p">,</span> <span class="s1">'what'</span><span class="p">,</span> <span class="s1">'so'</span><span class="p">,</span> <span class="s1">'up'</span><span class="p">,</span> <span class="s1">'out'</span><span class="p">,</span> <span class="s1">'if'</span><span class="p">,</span> <span class="s1">'about'</span><span class="p">,</span> <span class="s1">'who'</span><span class="p">,</span>	<span class="s1">'get'</span><span class="p">,</span> <span class="s1">'which'</span><span class="p">,</span> <span class="s1">'go'</span><span class="p">,</span> <span class="s1">'me'</span><span class="p">,</span> <span class="s1">'when'</span><span class="p">,</span> <span class="s1">'make'</span><span class="p">,</span> <span class="s1">'can'</span><span class="p">,</span> <span class="s1">'like'</span><span class="p">,</span> <span class="s1">'time'</span><span class="p">,</span> <span class="s1">'no'</span><span class="p">,</span> <span class="s1">'just'</span><span class="p">,</span> <span class="s1">'him'</span><span class="p">,</span> <span class="s1">'know'</span><span class="p">,</span> <span class="s1">'take'</span><span class="p">,</span> <span class="s1">'people'</span><span class="p">,</span> <span class="s1">'into'</span><span class="p">,</span> <span class="s1">'year'</span><span class="p">,</span> <span class="s1">'your'</span><span class="p">,</span> <span class="s1">'good'</span><span class="p">,</span> <span class="s1">'some'</span><span class="p">,</span> <span class="s1">'could'</span><span class="p">,</span><span class="s1">'them'</span><span class="p">,</span> <span class="s1">'see'</span><span class="p">,</span> <span class="s1">'other'</span><span class="p">,</span> <span class="s1">'than'</span><span class="p">,</span> <span class="s1">'then'</span><span class="p">,</span> <span class="s1">'now'</span><span class="p">,</span> <span class="s1">'look'</span><span class="p">,</span> <span class="s1">'only'</span><span class="p">,</span> <span class="s1">'come'</span><span class="p">,</span> <span class="s1">'its'</span><span class="p">,</span> <span class="s1">'over'</span><span class="p">,</span> <span class="s1">'think'</span><span class="p">,</span> <span class="s1">'also'</span><span class="p">,</span> <span class="s1">'back'</span><span class="p">,</span> <span class="s1">'after'</span><span class="p">,</span> <span class="s1">'use'</span><span class="p">,</span> <span class="s1">'two'</span><span class="p">,</span> <span class="s1">'how'</span><span class="p">,</span>	<span class="s1">'our'</span><span class="p">,</span> <span class="s1">'work'</span><span class="p">,</span> <span class="s1">'first'</span><span class="p">,</span>	<span class="s1">'well'</span><span class="p">,</span>	<span class="s1">'way'</span><span class="p">,</span> <span class="s1">'even'</span><span class="p">,</span> <span class="s1">'new'</span><span class="p">,</span>	<span class="s1">'want'</span><span class="p">,</span> <span class="s1">'because'</span><span class="p">,</span> <span class="s1">'any'</span><span class="p">,</span> <span class="s1">'these'</span><span class="p">,</span> <span class="s1">'give'</span><span class="p">,</span> <span class="s1">'day'</span><span class="p">,</span> <span class="s1">'most'</span><span class="p">,</span> <span class="s1">'us'</span><span class="p">,</span> <span class="s1">''</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Analyzing data."</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">analyze_string_data</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">string_data</span><span class="p">):</span>
+        <span class="n">vice_compiler</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ele</span> <span class="k">in</span> <span class="ss">string_data:
+            </span><span class="k">for</span> <span class="n">word</span> <span class="k">in</span> <span class="n">ele</span><span class="p">.</span><span class="nf">split</span><span class="p">():</span>
+                <span class="c1"># cleanse the word using Regular expression and string methods</span>
+                <span class="n">regex</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">compile</span><span class="p">(</span><span class="s1">'[^a-zA-Z]'</span><span class="p">)</span>
+                <span class="n">cleansed_word</span> <span class="o">=</span> <span class="n">regex</span><span class="p">.</span><span class="nf">sub</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span><span class="n">word</span><span class="p">.</span><span class="nf">lower</span><span class="p">().</span><span class="nf">rstrip</span><span class="p">())</span>
+                <span class="n">vice_compiler</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">cleansed_word</span><span class="p">)</span>
+        <span class="c1"># creates a dictionary of unique words with zero initial count</span>
+        <span class="c1"># drop the word in the dictionary if it is just a useless common English word</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">vice_str_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">key</span> <span class="k">in</span> <span class="n">set</span><span class="p">(</span><span class="n">vice_compiler</span><span class="p">)</span> <span class="k">if</span> <span class="n">key</span> <span class="n">not</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nf">common_english_words</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">ele</span> <span class="k">in</span> <span class="ss">vice_compiler:
+            </span><span class="k">if</span> <span class="n">ele</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nf">vice_str_dict</span><span class="p">:</span>
+                <span class="nb">self</span><span class="p">.</span><span class="nf">vice_str_dict</span><span class="p">[</span><span class="n">ele</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="nb">self</span><span class="p">.</span><span class="nf">vice_str_dict</span>
+
+    <span class="k">def</span> <span class="nf">analyze_emoji_data</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">emoji_data</span><span class="p">):</span>
+        <span class="c1"># creates a dictionary of unique emojis with zero initial count</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nf">vice_emoji_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">key</span> <span class="k">in</span> <span class="n">set</span><span class="p">(</span><span class="n">emoji_data</span><span class="p">)}</span>
+        <span class="k">for</span> <span class="n">ele</span> <span class="k">in</span> <span class="ss">emoji_data:
+            </span><span class="k">if</span> <span class="n">ele</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nf">vice_emoji_dict</span><span class="p">:</span>
+                <span class="nb">self</span><span class="p">.</span><span class="nf">vice_emoji_dict</span><span class="p">[</span><span class="n">ele</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="nb">self</span><span class="p">.</span><span class="nf">vice_emoji_dict</span></code></pre></figure>
+
+<p>Note most commonly used English words are hard coded to help the program filter out trivial words. Remember, we are only interested in what Venmo users are paying for. Using Regex, we get rid of special characters and whitespaces from words. The clenased words are then added to a compiler. A similar process is carried out to extract emoji data. The resulting outputs are dictionaries containing the objects or activities Venmo users paid for and how many times it appears in the collected data. Finally, we have all the tools to obtain the data.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>The working version of the codes from this project is available on Github. Here is the <a href="https://github.com/kennylee15/vicemo_scraper">link</a>. There are many different ways to use this data. The below is an example of visualization that I created using Tableau Public with the data that were obtained on July 27th.</p>
+
+<center>
+<script type="text/javascript" src="https://public.tableau.com/javascripts/api/viz_v1.js"></script><div class="tableauPlaceholder" style="width: 654px; height: 646px;"><noscript><a href="#"><img alt="Dashboard 1 " src="https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Vi&#47;Vicemo&#47;Dashboard1&#47;1_rss.png" style="border: none" /></a></noscript><object class="tableauViz" width="654" height="646" style="display:none;"><param name="host_url" value="https%3A%2F%2Fpublic.tableau.com%2F" /> <param name="site_root" value="" /><param name="name" value="Vicemo&#47;Dashboard1" /><param name="tabs" value="no" /><param name="toolbar" value="yes" /><param name="static_image" value="https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Vi&#47;Vicemo&#47;Dashboard1&#47;1.png" /> <param name="animate_transition" value="yes" /><param name="display_static_image" value="yes" /><param name="display_spinner" value="yes" /><param name="display_overlay" value="yes" /><param name="display_count" value="yes" /></object></div>
+</center>
+
+:ET
