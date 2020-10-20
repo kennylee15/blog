@@ -6,9 +6,9 @@
 # 'jekyll serve'. If you change this file, please restart the server process.
 
 # Site settings
-title: The Certain Uncertainty
+title: Numerical Thoughts
 email: leehkenny@gmail.com
-description: In search of meaningful correlations around the world <br> Blog by Kenny Lee
+description: Thoughts worth sharing
 baseurl: "/blog" # the subpath of your site, e.g. /blog
 url: "http://kennylee15.github.io" # the base hostname & protocol for your site
 # url: "http://127.0.0.1:4000"

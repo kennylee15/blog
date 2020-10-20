@@ -9,7 +9,7 @@ permalink: /about/
 
 ### Hi, I'm Kenny.
 
-I am currently located in New York City and I'm passionate about data and economic analysis. I am not maintaining this blog due to other commitments at the moment.
+I am an economist based in New York City. I am interested in how data and new technologies push the boundaries of research in economics and other social sciences.
 
 Please visit my <a href="http://{{ site.personalpage }}"><i class="fa fa-home"></i> personal website</a> or contact me via: 
 <ul>
@@ -37,6 +37,6 @@ Please visit my <a href="http://{{ site.personalpage }}"><i class="fa fa-home"><
 
 <div class="separator">♦</div>
 
-### The Certain Uncertainty
+### Numerical Thoughts
 
-The Certain Uncertainty is my little space to share my passion for distilling public data into useful insights in a way that is beautifully understandable. I am glad to have my own medium for writing about things that excite me. You will find stories about data, Python, R, JavaScript, and some economic contemplations. 
+The world is immeasurably unpredictable. I'd lke to share anything related to data and tools (Julia, Python and R) that might help us measure this world better.
