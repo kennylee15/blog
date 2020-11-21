@@ -1,0 +1,383 @@
+I"e�<h1 id="replicating-propublicas-compas-data-analysis-with-python">Replicating ProPublica’s COMPAS data analysis with Python</h1>
+
+<p>In May 2016, a ProPublica article <a href="https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing/">(Angwin et al. 2016)</a> showed the COMPAS Recidivism Algorithm, used by US courts to predict recidivism, is biased against African Americans. The authors offered the codes in R. Based on their codes, I re-produced in Python the first half of ProPublica’s evaluation of the COMPAS Recidivism Algorithm.</p>
+
+<ul>
+  <li><a href="https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing/">Read the ProPublica story</a>.</li>
+  <li><a href="https://www.propublica.org/article/how-we-analyzed-the-compas-recidivism-algorithm">Read the technical note</a>.</li>
+</ul>
+
+<h2 id="1-compas-score-and-risk-of-recidivism">1) COMPAS score and risk of recidivism</h2>
+
+<h3 id="load-data">Load data</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="n">pd</span><span class="p">.</span><span class="n">options</span><span class="p">.</span><span class="n">mode</span><span class="p">.</span><span class="n">chained_assignment</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c1"># default='warn'
+</span>
+<span class="n">dataURL</span> <span class="o">=</span> <span class="s">'https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years.csv'</span>
+<span class="n">dfRaw</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">dataURL</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Select fields for severity of charge, number of priors, demographics, age, sex, compas scores, and whether each person was accused of a crime within two years.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dfFiltered</span> <span class="o">=</span> <span class="p">(</span><span class="n">dfRaw</span><span class="p">[[</span><span class="s">'age'</span><span class="p">,</span> <span class="s">'c_charge_degree'</span><span class="p">,</span> <span class="s">'race'</span><span class="p">,</span> <span class="s">'age_cat'</span><span class="p">,</span> <span class="s">'score_text'</span><span class="p">,</span> 
+             <span class="s">'sex'</span><span class="p">,</span> <span class="s">'priors_count'</span><span class="p">,</span> <span class="s">'days_b_screening_arrest'</span><span class="p">,</span> <span class="s">'decile_score'</span><span class="p">,</span> 
+             <span class="s">'is_recid'</span><span class="p">,</span> <span class="s">'two_year_recid'</span><span class="p">,</span> <span class="s">'c_jail_in'</span><span class="p">,</span> <span class="s">'c_jail_out'</span><span class="p">]]</span>
+             <span class="p">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'days_b_screening_arrest'</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'days_b_screening_arrest'</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">30</span><span class="p">),</span> <span class="p">:]</span>
+             <span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'is_recid'</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+             <span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'c_charge_degree'</span><span class="p">]</span> <span class="o">!=</span> <span class="s">'O'</span><span class="p">,</span> <span class="p">:]</span>
+             <span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'score_text'</span><span class="p">]</span> <span class="o">!=</span> <span class="s">'N/A'</span><span class="p">,</span> <span class="p">:]</span>
+             <span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'Number of rows: {}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dfFiltered</span><span class="p">.</span><span class="n">index</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Number of rows: 6172
+</code></pre></div></div>
+
+<h3 id="score-distribution-by-race">Score distribution by race</h3>
+
+<p>The distribution of decile scores, which are often presented to judges alongside risk classification (High, Medium and Low), suggests disparity. There is no clear downtrend in decile scores for African American defendents, unlike for the Caucasian counterpart.</p>
+
+<p>COMPAS scores for each defendant ranged from 1 to 10, with ten being the highest risk. Scores 1 to 4 were labeled by COMPAS as “Low”; 5 to 7 were labeled “Medium”; and 8 to 10 were labeled “High.”</p>
+
+<p><b>Simple cross tabulation of score categories by race</b></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">pd</span><span class="p">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">dfFiltered</span><span class="p">[</span><span class="s">'score_text'</span><span class="p">],</span><span class="n">dfFiltered</span><span class="p">[</span><span class="s">'race'</span><span class="p">])</span>
+</code></pre></div></div>
+
+<div>
+
+<table class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>race</th>
+      <th>African-American</th>
+      <th>Asian</th>
+      <th>Caucasian</th>
+      <th>Hispanic</th>
+      <th>Native American</th>
+      <th>Other</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>High</th>
+      <td>845</td>
+      <td>3</td>
+      <td>223</td>
+      <td>47</td>
+      <td>4</td>
+      <td>22</td>
+    </tr>
+    <tr>
+      <th>Low</th>
+      <td>1346</td>
+      <td>24</td>
+      <td>1407</td>
+      <td>368</td>
+      <td>3</td>
+      <td>273</td>
+    </tr>
+    <tr>
+      <th>Medium</th>
+      <td>984</td>
+      <td>4</td>
+      <td>473</td>
+      <td>94</td>
+      <td>4</td>
+      <td>48</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p><b> </b>
+<b>Decile scores that correspond to score categories</b></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">pd</span><span class="p">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">dfFiltered</span><span class="p">[</span><span class="s">'score_text'</span><span class="p">],</span><span class="n">dfFiltered</span><span class="p">[</span><span class="s">'decile_score'</span><span class="p">])</span>
+</code></pre></div></div>
+
+<div>
+
+<table class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>decile_score</th>
+      <th>1</th>
+      <th>2</th>
+      <th>3</th>
+      <th>4</th>
+      <th>5</th>
+      <th>6</th>
+      <th>7</th>
+      <th>8</th>
+      <th>9</th>
+      <th>10</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Low</th>
+      <td>1286</td>
+      <td>822</td>
+      <td>647</td>
+      <td>666</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>Medium</th>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>582</td>
+      <td>529</td>
+      <td>496</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>High</th>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>420</td>
+      <td>420</td>
+      <td>304</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>Histograms of decile scores</b></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="n">sns</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">sns</span><span class="p">.</span><span class="nb">set</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s">'darkgrid'</span><span class="p">)</span>
+<span class="n">sns</span><span class="p">.</span><span class="n">countplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s">'decile_score'</span><span class="p">,</span> <span class="n">hue</span><span class="o">=</span><span class="s">'race'</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">dfFiltered</span><span class="p">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">dfFiltered</span><span class="p">[</span><span class="s">'race'</span><span class="p">]</span> <span class="o">==</span> <span class="s">'African-American'</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">dfFiltered</span><span class="p">[</span><span class="s">'race'</span><span class="p">]</span> <span class="o">==</span> <span class="s">'Caucasian'</span><span class="p">),:</span>
+            <span class="p">])</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Distribution of Decile Scores by Race"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Decile Score'</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Count'</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Text(0, 0.5, 'Count')
+</code></pre></div></div>
+
+<div class="image">
+
+
+    <figure>
+        <img src="http://kennylee15.github.io/blog/assets/posts/2020-11-01-replicating-propublica-s-compas-data-analysis-with-python/output_10_1.png" />
+        <figcaption>Distribution of Decile Scores by Race</figcaption>
+    </figure>
+
+</div>
+
+<h3 id="regression-analysis---logistic-regression">Regression analysis - logistic regression</h3>
+
+<p>Here, I transform cateogorical data into dummy variables and run logistic regressions that consider race, age, criminal history, future recidivism, charge degree, gender and age. ‘High’ and ‘Medium’ categories are combined following the ProPublica analysis.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="n">sm</span>
+<span class="kn">from</span> <span class="nn">statsmodels.formula.api</span> <span class="kn">import</span> <span class="n">logit</span>
+<span class="n">catCols</span> <span class="o">=</span> <span class="p">[</span><span class="s">'score_text'</span><span class="p">,</span><span class="s">'age_cat'</span><span class="p">,</span><span class="s">'sex'</span><span class="p">,</span><span class="s">'race'</span><span class="p">,</span><span class="s">'c_charge_degree'</span><span class="p">]</span>
+<span class="n">dfFiltered</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">catCols</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfFiltered</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">catCols</span><span class="p">].</span><span class="n">astype</span><span class="p">(</span><span class="s">'category'</span><span class="p">)</span>
+
+<span class="c1"># dfDummies = pd.get_dummies(data = dfFiltered.loc[dfFiltered['score_text'] != 'Low',:], columns=catCols)
+</span><span class="n">dfDummies</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">dfFiltered</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">catCols</span><span class="p">)</span>
+
+<span class="c1"># Clean column names
+</span><span class="n">new_column_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span><span class="p">.</span><span class="n">lstrip</span><span class="p">().</span><span class="n">rstrip</span><span class="p">().</span><span class="n">lower</span><span class="p">().</span><span class="n">replace</span><span class="p">(</span><span class="s">" "</span><span class="p">,</span> <span class="s">"_"</span><span class="p">).</span><span class="n">replace</span><span class="p">(</span><span class="s">"-"</span><span class="p">,</span> <span class="s">"_"</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">dfDummies</span><span class="p">.</span><span class="n">columns</span><span class="p">]</span>
+<span class="n">dfDummies</span><span class="p">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">new_column_names</span>
+
+<span class="c1"># We want another variable that combines Medium and High
+</span><span class="n">dfDummies</span><span class="p">[</span><span class="s">'score_text_medhi'</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfDummies</span><span class="p">[</span><span class="s">'score_text_medium'</span><span class="p">]</span> <span class="o">+</span> <span class="n">dfDummies</span><span class="p">[</span><span class="s">'score_text_high'</span><span class="p">]</span>
+
+</code></pre></div></div>
+
+<h3 id="logistic-regression">Logistic regression</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># R-style specification
+</span><span class="n">formula</span> <span class="o">=</span> <span class="s">'score_text_medhi ~ sex_female + age_cat_greater_than_45 + age_cat_less_than_25 + race_african_american + race_asian + race_hispanic + race_native_american + race_other + priors_count + c_charge_degree_m + two_year_recid'</span>
+
+<span class="n">score_mod</span> <span class="o">=</span> <span class="n">logit</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">dfDummies</span><span class="p">).</span><span class="n">fit</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="n">score_mod</span><span class="p">.</span><span class="n">summary</span><span class="p">())</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Optimization terminated successfully.
+         Current function value: 0.499708
+         Iterations 6
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:       score_text_medhi   No. Observations:                 6172
+Model:                          Logit   Df Residuals:                     6160
+Method:                           MLE   Df Model:                           11
+Date:                Sat, 21 Nov 2020   Pseudo R-squ.:                  0.2729
+Time:                        16:26:02   Log-Likelihood:                -3084.2
+converged:                       True   LL-Null:                       -4241.7
+Covariance Type:            nonrobust   LLR p-value:                     0.000
+===========================================================================================
+                              coef    std err          z      P&gt;|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                  -1.5255      0.079    -19.430      0.000      -1.679      -1.372
+sex_female                  0.2213      0.080      2.783      0.005       0.065       0.377
+age_cat_greater_than_45    -1.3556      0.099    -13.682      0.000      -1.550      -1.161
+age_cat_less_than_25        1.3084      0.076     17.232      0.000       1.160       1.457
+race_african_american       0.4772      0.069      6.881      0.000       0.341       0.613
+race_asian                 -0.2544      0.478     -0.532      0.595      -1.192       0.683
+race_hispanic              -0.4284      0.128     -3.344      0.001      -0.680      -0.177
+race_native_american        1.3942      0.766      1.820      0.069      -0.107       2.896
+race_other                 -0.8263      0.162     -5.098      0.000      -1.144      -0.509
+priors_count                0.2689      0.011     24.221      0.000       0.247       0.291
+c_charge_degree_m          -0.3112      0.067     -4.677      0.000      -0.442      -0.181
+two_year_recid              0.6859      0.064     10.713      0.000       0.560       0.811
+===========================================================================================
+</code></pre></div></div>
+
+<p>Black defendants were 45.3 percent more likely than white defendants to receive a higher score, correcting for prior crimes, future criminality.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">control</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5255</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5255</span><span class="p">))</span>
+<span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.4772</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">control</span> <span class="o">+</span> <span class="p">(</span><span class="n">control</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.4772</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1.452825407001621
+</code></pre></div></div>
+
+<p>Female defendants are 19.4% more likely than men to get a higher score.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.2213</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">control</span> <span class="o">+</span> <span class="p">(</span><span class="n">control</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.2213</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1.1948243807769987
+</code></pre></div></div>
+
+<h2 id="2-compas-score-and-risk-of-violent-recidivism">2) COMPAS score and risk of “violent” recidivism</h2>
+
+<p>ProPublica authors followed the FBI’s definition of violent crime, a category that includes murder, manslaughter, forcible rape, robbery and aggravated assault.</p>
+<h3 id="load-data-1">Load data</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dataURL</span> <span class="o">=</span> <span class="s">'https://raw.githubusercontent.com/propublica/compas-analysis/master/compas-scores-two-years-violent.csv'</span>
+<span class="n">dfRaw</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">dataURL</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dfFiltered</span> <span class="o">=</span> <span class="p">(</span><span class="n">dfRaw</span><span class="p">[[</span><span class="s">'age'</span><span class="p">,</span> <span class="s">'c_charge_degree'</span><span class="p">,</span> <span class="s">'race'</span><span class="p">,</span> <span class="s">'age_cat'</span><span class="p">,</span> <span class="s">'v_score_text'</span><span class="p">,</span> 
+             <span class="s">'sex'</span><span class="p">,</span> <span class="s">'priors_count'</span><span class="p">,</span> <span class="s">'days_b_screening_arrest'</span><span class="p">,</span> <span class="s">'v_decile_score'</span><span class="p">,</span> 
+             <span class="s">'is_recid'</span><span class="p">,</span> <span class="s">'two_year_recid'</span><span class="p">,</span> <span class="s">'c_jail_in'</span><span class="p">,</span> <span class="s">'c_jail_out'</span><span class="p">]]</span>
+             <span class="p">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'days_b_screening_arrest'</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'days_b_screening_arrest'</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">30</span><span class="p">),</span> <span class="p">:]</span>
+             <span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'is_recid'</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+             <span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'c_charge_degree'</span><span class="p">]</span> <span class="o">!=</span> <span class="s">'O'</span><span class="p">,</span> <span class="p">:]</span>
+             <span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dfRaw</span><span class="p">[</span><span class="s">'v_score_text'</span><span class="p">]</span> <span class="o">!=</span> <span class="s">'N/A'</span><span class="p">,</span> <span class="p">:]</span>
+             <span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'Number of rows: {}'</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dfFiltered</span><span class="p">.</span><span class="n">index</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Number of rows: 4020
+</code></pre></div></div>
+
+<h3 id="score-distribution-by-race-1">Score distribution by race</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sns</span><span class="p">.</span><span class="nb">set</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s">'darkgrid'</span><span class="p">)</span>
+<span class="n">sns</span><span class="p">.</span><span class="n">countplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s">'v_decile_score'</span><span class="p">,</span> <span class="n">hue</span><span class="o">=</span><span class="s">'race'</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">dfFiltered</span><span class="p">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">dfFiltered</span><span class="p">[</span><span class="s">'race'</span><span class="p">]</span> <span class="o">==</span> <span class="s">'African-American'</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">dfFiltered</span><span class="p">[</span><span class="s">'race'</span><span class="p">]</span> <span class="o">==</span> <span class="s">'Caucasian'</span><span class="p">),:</span>
+            <span class="p">])</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Distribution of Violent Decile Scores by Race"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Decile Score'</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Count'</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Text(0, 0.5, 'Count')
+</code></pre></div></div>
+
+<div class="image">
+
+
+    <figure>
+        <img src="http://kennylee15.github.io/blog/assets/posts/2020-11-01-replicating-propublica-s-compas-data-analysis-with-python/output_23_1.png" />
+        <figcaption>Distribution of Violent Decile Scores by Race</figcaption>
+    </figure>
+
+</div>
+
+<p>COMPAS violent risk scores also show a disparity in distribution between white and black defendants.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">catCols</span> <span class="o">=</span> <span class="p">[</span><span class="s">'v_score_text'</span><span class="p">,</span><span class="s">'age_cat'</span><span class="p">,</span><span class="s">'sex'</span><span class="p">,</span><span class="s">'race'</span><span class="p">,</span><span class="s">'c_charge_degree'</span><span class="p">]</span>
+<span class="n">dfFiltered</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">catCols</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfFiltered</span><span class="p">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">catCols</span><span class="p">].</span><span class="n">astype</span><span class="p">(</span><span class="s">'category'</span><span class="p">)</span>
+
+<span class="c1"># dfDummies = pd.get_dummies(data = dfFiltered.loc[dfFiltered['score_text'] != 'Low',:], columns=catCols)
+</span><span class="n">dfDummies</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">dfFiltered</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">catCols</span><span class="p">)</span>
+
+<span class="c1"># Clean column names
+</span><span class="n">new_column_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span><span class="p">.</span><span class="n">lstrip</span><span class="p">().</span><span class="n">rstrip</span><span class="p">().</span><span class="n">lower</span><span class="p">().</span><span class="n">replace</span> <span class="p">(</span><span class="s">" "</span><span class="p">,</span> <span class="s">"_"</span><span class="p">).</span><span class="n">replace</span> <span class="p">(</span><span class="s">"-"</span><span class="p">,</span> <span class="s">"_"</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">dfDummies</span><span class="p">.</span><span class="n">columns</span><span class="p">]</span>
+<span class="n">dfDummies</span><span class="p">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">new_column_names</span>
+
+<span class="c1"># We want another variable that combines Medium and High
+</span><span class="n">dfDummies</span><span class="p">[</span><span class="s">'v_score_text_medhi'</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfDummies</span><span class="p">[</span><span class="s">'v_score_text_medium'</span><span class="p">]</span> <span class="o">+</span> <span class="n">dfDummies</span><span class="p">[</span><span class="s">'v_score_text_high'</span><span class="p">]</span>
+
+</code></pre></div></div>
+
+<h3 id="regression-analysis---logistic-regression-1">Regression analysis - logistic regression</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">formula</span> <span class="o">=</span> <span class="s">'v_score_text_medhi ~ sex_female + age_cat_greater_than_45 + age_cat_less_than_25 + race_african_american + race_asian + race_hispanic + race_native_american + race_other + priors_count + c_charge_degree_m + two_year_recid'</span>
+
+<span class="n">score_mod</span> <span class="o">=</span> <span class="n">logit</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">dfDummies</span><span class="p">).</span><span class="n">fit</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="n">score_mod</span><span class="p">.</span><span class="n">summary</span><span class="p">())</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Optimization terminated successfully.
+         Current function value: 0.372983
+         Iterations 7
+                           Logit Regression Results                           
+==============================================================================
+Dep. Variable:     v_score_text_medhi   No. Observations:                 4020
+Model:                          Logit   Df Residuals:                     4008
+Method:                           MLE   Df Model:                           11
+Date:                Sat, 21 Nov 2020   Pseudo R-squ.:                  0.3662
+Time:                        16:26:03   Log-Likelihood:                -1499.4
+converged:                       True   LL-Null:                       -2365.9
+Covariance Type:            nonrobust   LLR p-value:                     0.000
+===========================================================================================
+                              coef    std err          z      P&gt;|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------
+Intercept                  -2.2427      0.113    -19.802      0.000      -2.465      -2.021
+sex_female                 -0.7289      0.127     -5.755      0.000      -0.977      -0.481
+age_cat_greater_than_45    -1.7421      0.184     -9.460      0.000      -2.103      -1.381
+age_cat_less_than_25        3.1459      0.115     27.259      0.000       2.920       3.372
+race_african_american       0.6589      0.108      6.093      0.000       0.447       0.871
+race_asian                 -0.9852      0.705     -1.397      0.162      -2.368       0.397
+race_hispanic              -0.0642      0.191     -0.335      0.737      -0.439       0.311
+race_native_american        0.4479      1.035      0.433      0.665      -1.582       2.477
+race_other                 -0.2054      0.225     -0.914      0.360      -0.646       0.235
+priors_count                0.1376      0.012     11.854      0.000       0.115       0.160
+c_charge_degree_m          -0.1637      0.098     -1.669      0.095      -0.356       0.029
+two_year_recid              0.9345      0.115      8.107      0.000       0.709       1.160
+===========================================================================================
+</code></pre></div></div>
+
+<p>Black defendants were 77.4 percent more likely than white defendants to receive a higher score, correcting for prior crimes, future criminality.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">control</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">2.2427</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">2.2427</span><span class="p">))</span>
+<span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.6589</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">control</span> <span class="o">+</span> <span class="p">(</span><span class="n">control</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.6589</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1.7738715321327136
+</code></pre></div></div>
+
+:ET
